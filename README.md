@@ -47,8 +47,9 @@ The directive approach is similar to default angular directives. Something worth
 
 ###The Scroll Object
 If you use the event object from the directive or the `get()` method from the factory you will receive an object with some scroll related properties and values.
+
 key | description
----- | ----
+--- | ---
 x | Current scroll position along the X axis
 y | Current scroll position along the Y axis
 type | Event type
