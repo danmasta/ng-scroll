@@ -24,15 +24,16 @@ var ngScroll = angular.module('ngScroll', []);
 // Broadcasts 'scroll' event from $rootScope to be inherited by all child scopes
 ngScroll.factory('scroll', ['$window', '$document', '$rootScope', '$interval', function($window, $document, $rootScope, $interval) {
   function Scroll(event) {
+    this.prev = $rootScope.prevScroll || false,
     this.x = $window.pageXOffset !== undefined ? $window.pageXOffset : ($document[0].documentElement || $document[0].body.parentNode || $document[0].body).scrollLeft,
     this.y = $window.pageYOffset !== undefined ? $window.pageYOffset : ($document[0].documentElement || $document[0].body.parentNode || $document[0].body).scrollTop,
     this.type = event.type || event.name,
     this.timestamp = event.timeStamp || Date.now(),
-    this.timelapse = $rootScope.prevScroll ? this.timestamp - $rootScope.prevScroll.timestamp : 0,
-    this.distanceX = this.x - ($rootScope.prevScroll ? $rootScope.prevScroll.x : 0),
-    this.distanceY = this.y - ($rootScope.prevScroll ? $rootScope.prevScroll.y : 0),
-    this.velocityX = this.distanceX / (this.timestamp - ($rootScope.prevScroll ? $rootScope.prevScroll.timestamp : 0)),
-    this.velocityY = this.distanceY / (this.timestamp - ($rootScope.prevScroll ? $rootScope.prevScroll.timestamp : 0)),
+    this.timelapse = this.prev ? this.timestamp - this.prev.timestamp : 0,
+    this.distanceX = this.x - (this.prev ? this.prev.x : 0),
+    this.distanceY = this.y - (this.prev ? this.prev.y : 0),
+    this.velocityX = this.distanceX / (this.timestamp - (this.prev ? this.prev.timestamp : 0)),
+    this.velocityY = this.distanceY / (this.timestamp - (this.prev ? this.prev.timestamp : 0)),
     this.directionX = this.distanceX < 0 ? 'left' : this.distanceX > 0 ? 'right' : false,
     this.directionY = this.distanceY < 0 ? 'up' : this.distanceY > 0 ? 'down' : false,
     this.scrollHeight = ($document[0].body.scrollHeight || $document[0].documentElement.scrollHeight) - $window.innerHeight,
@@ -42,7 +43,7 @@ ngScroll.factory('scroll', ['$window', '$document', '$rootScope', '$interval', f
     get: function(event) {
       return new Scroll(event);
     },
-    date: function() {
+    setDate: function() {
       if (!Date.now) {
         Date.now = function() {
           return new Date().getTime();
@@ -50,11 +51,11 @@ ngScroll.factory('scroll', ['$window', '$document', '$rootScope', '$interval', f
       };
       return;
     },
-    check: function() {
+    checkBind: function() {
       if (angular.isUndefined($rootScope.catchScroll)) return false;
       return $rootScope.catchScroll;
     },
-    bind: function() {
+    setBind: function() {
       var _this = this;
       var scrollThrottle = 30;
       var didScroll = false;
@@ -75,10 +76,11 @@ ngScroll.factory('scroll', ['$window', '$document', '$rootScope', '$interval', f
       });
       $rootScope.catchScroll = true;
     },
-    set: function(){
-      if (!this.check()) {
-        this.date();
-        this.bind();
+    bind: function(){
+      if (!this.checkBind()) {
+        this.setDate();
+        this.setBind();
+        return;
       }
     }
   };
@@ -92,7 +94,7 @@ ngScroll.directive('ngScroll', ['$parse', 'scroll', function($parse, scroll) {
     compile: function($element, attr) {
       var fn = $parse(attr['ngScroll']);
       return function(scope, element, attr) {
-        scroll.set();
+        scroll.bind();
         scope.$on('scroll', function(event, data) {
           fn(scope, { $event: data });
         });
