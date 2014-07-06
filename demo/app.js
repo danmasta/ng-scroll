@@ -4,7 +4,7 @@ app.directive('scrollTest', ['scroll', function(scroll){
   return{
     restrict:'A',
     controller: function($scope){
-      scroll.set();
+      scroll.bind();
       $scope.$on('scroll', function(data, $event){
         $scope.scroll = $event;
       });
